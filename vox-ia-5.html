@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vox IA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:#0a0a0f;color:#f0f0f0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+  ::-webkit-scrollbar{width:3px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}
+
+  #setup-screen{position:fixed;inset:0;background:#0a0a0f;display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;overflow-y:auto;}
+  #setup-card{width:100%;max-width:400px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:30px 24px;animation:fadeUp 0.5s ease;margin:auto;}
+  .setup-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+  .setup-logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#00e5ff,#7c4dff);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 18px rgba(0,229,255,0.28);}
+  .setup-logo-name{font-size:22px;font-weight:700;letter-spacing:-0.04em;background:linear-gradient(90deg,#fff 0%,#00e5ff 50%,#7c4dff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% auto;animation:shimmer 4s linear infinite;}
+  .setup-logo-badge{font-size:9px;color:#00e5ff;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);border-radius:4px;padding:2px 6px;letter-spacing:0.06em;}
+  #setup-desc{font-size:13px;color:#3a3a3a;margin-bottom:18px;line-height:1.7;}
+  #setup-desc a{color:#00e5ff;text-decoration:none;}
+  #setup-desc strong{color:#555;}
+  .key-wrap{position:relative;margin-bottom:10px;}
+  .key-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:13px 44px 13px 14px;color:#f0f0f0;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.2s;}
+  .key-input::placeholder{color:#252525;}
+  .key-input:focus{border-color:rgba(0,229,255,0.35);}
+  .toggle-key{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;color:#444;cursor:pointer;font-size:15px;padding:4px;line-height:1;}
+  #setup-error{font-size:12px;color:#ff6b6b;background:rgba(255,107,107,0.07);border:1px solid rgba(255,107,107,0.15);border-radius:9px;padding:9px 13px;margin-bottom:12px;display:none;line-height:1.5;}
+  #setup-btn{width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#00e5ff,#7c4dff);color:#0a0a0f;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s;}
+  #setup-btn:active{opacity:0.8;}
+  #setup-note{margin-top:14px;font-size:11px;color:#1a1a1a;text-align:center;line-height:1.6;}
+
+  #header{background:rgba(10,10,15,0.97);border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;}
+  #logo{display:flex;align-items:center;gap:9px;}
+  #logo-icon{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#00e5ff,#7c4dff);display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 12px rgba(0,229,255,0.3);}
+  #logo-name{font-size:20px;font-weight:700;letter-spacing:-0.04em;background:linear-gradient(90deg,#fff 0%,#00e5ff 50%,#7c4dff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% auto;animation:shimmer 4s linear infinite;}
+  #logo-badge{font-size:9px;color:#00e5ff;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);border-radius:4px;padding:2px 6px;letter-spacing:0.06em;}
+  #header-right{display:flex;align-items:center;gap:7px;}
+  .hdr-btn{background:none;border:1px solid rgba(255,255,255,0.06);border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;padding:5px 10px;transition:all 0.2s;}
+  #clear-btn{color:#2a2a2a;display:none;}
+  #key-btn{color:#1e3a3a;}
+
+  #app-body{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+  #chat-messages{flex:1;overflow-y:auto;padding:18px 16px 0;}
+  #chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100dvh - 185px);gap:24px;text-align:center;animation:fadeUp 0.5s ease;}
+  #empty-icon{width:66px;height:66px;border-radius:18px;background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(124,77,255,0.07));border:1px solid rgba(0,229,255,0.1);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 4px;}
+  #chat-empty h2{font-size:22px;font-weight:700;letter-spacing:-0.03em;background:linear-gradient(135deg,#fff,#aaa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;}
+  #chat-empty p{color:#333;font-size:13px;max-width:270px;line-height:1.65;}
+  .suggestions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:480px;}
+  .sug-btn{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:13px;padding:11px 12px;color:#555;font-size:12px;cursor:pointer;text-align:left;line-height:1.5;font-family:inherit;}
+  .sug-btn:active{background:rgba(255,255,255,0.06);}
+
+  .msg-row{display:flex;margin-bottom:16px;animation:fadeUp 0.3s ease;align-items:flex-end;}
+  .msg-row.user{justify-content:flex-end;}
+  .msg-row.bot{justify-content:flex-start;}
+  .avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+  .avatar.bot-av{background:linear-gradient(135deg,#00e5ff,#7c4dff);box-shadow:0 0 8px rgba(0,229,255,0.25);margin-right:9px;}
+  .avatar.user-av{background:rgba(255,255,255,0.07);color:#555;margin-left:9px;}
+  .bubble{max-width:80%;padding:11px 15px;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
+  .bubble.bot-b{border-radius:16px 16px 16px 4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);}
+  .bubble.user-b{border-radius:16px 16px 4px 16px;background:linear-gradient(135deg,#7c4dff,#5c35cc);box-shadow:0 4px 16px rgba(124,77,255,0.22);}
+  .thinking{display:flex;gap:5px;align-items:center;padding:4px 0;}
+  .dot{width:7px;height:7px;border-radius:50%;background:#00e5ff;animation:pulse 1.4s ease-in-out infinite;}
+
+  #chat-input-wrap{padding:10px 16px 20px;background:linear-gradient(to top,#0a0a0f 70%,transparent);}
+  #chat-form{display:flex;align-items:flex-end;gap:9px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:9px 11px;transition:border-color 0.2s;}
+  #chat-form:focus-within{border-color:rgba(0,229,255,0.2);}
+  #chat-input{flex:1;background:transparent;border:none;outline:none;color:#f0f0f0;font-size:15px;line-height:1.6;resize:none;max-height:120px;overflow-y:auto;font-family:inherit;}
+  #chat-input::placeholder{color:#222;}
+  #send-btn{width:36px;height:36px;border-radius:10px;border:none;background:rgba(255,255,255,0.05);color:#252525;font-size:18px;cursor:pointer;transition:all 0.2s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  #send-btn.ready{background:linear-gradient(135deg,#00e5ff,#7c4dff);color:#0a0a0f;box-shadow:0 0 12px rgba(0,229,255,0.3);}
+  #input-hint{text-align:center;margin-top:6px;font-size:10px;color:#181818;}
+
+  @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulse{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+
+<div id="setup-screen">
+  <div id="setup-card">
+    <div class="setup-logo">
+      <div class="setup-logo-icon">✦</div>
+      <span class="setup-logo-name">Vox</span>
+      <span class="setup-logo-badge">IA</span>
+    </div>
+    <div id="setup-desc">
+      Cole sua chave do <strong>Google Gemini</strong> para começar.<br><br>
+      Crie <strong>gratuitamente</strong> (sem cartão) em:<br>
+      <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com → Get API Key</a><br><br>
+      <span style="color:#1e1e1e;">🔒 Salva só neste dispositivo, nunca enviada a terceiros.</span>
+    </div>
+    <div class="key-wrap">
+      <input class="key-input" id="gemini-key" type="password" placeholder="AIzaSy..." autocomplete="off" spellcheck="false"/>
+      <button class="toggle-key" id="toggle-btn">👁</button>
+    </div>
+    <div id="setup-error"></div>
+    <button id="setup-btn">Entrar →</button>
+    <div id="setup-note">Chave guardada no navegador (localStorage).<br>Remova quando quiser pelo botão 🔑 no topo.</div>
+  </div>
+</div>
+
+<div id="header">
+  <div id="logo">
+    <div id="logo-icon">✦</div>
+    <span id="logo-name">Vox</span>
+    <span id="logo-badge">IA</span>
+  </div>
+  <div id="header-right">
+    <button class="hdr-btn" id="clear-btn">↺ Limpar</button>
+    <button class="hdr-btn" id="key-btn">🔑 Chave</button>
+  </div>
+</div>
+
+<div id="app-body">
+  <div id="chat-messages">
+    <div id="chat-empty">
+      <div>
+        <div id="empty-icon">💬</div>
+        <h2>Tire suas dúvidas</h2>
+        <p>Pergunte sobre ciência, tecnologia, história, cultura e muito mais.</p>
+      </div>
+      <div class="suggestions-grid">
+        <button class="sug-btn">Como funciona a inteligência artificial?</button>
+        <button class="sug-btn">Qual a diferença entre DNA e RNA?</button>
+        <button class="sug-btn">Como aprender programação do zero?</button>
+        <button class="sug-btn">Por que o céu é azul?</button>
+      </div>
+    </div>
+  </div>
+  <div id="chat-input-wrap">
+    <div id="chat-form">
+      <textarea id="chat-input" rows="1" placeholder="Digite sua dúvida aqui..."></textarea>
+      <button id="send-btn">↑</button>
+    </div>
+    <div id="input-hint">Toque em ↑ para enviar</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var API_KEY    = '';
+  var chatLoading = false;
+  var history    = []; // [{role:'user'|'model', parts:[{text:''}]}]
+
+  var SYSTEM = 'Você é Vox, uma IA inteligente. Responda sempre em português, de forma clara, direta e detalhada, a menos que o usuário escreva em outro idioma. Seja preciso, didático e simpático.';
+
+  // ── elementos ──────────────────────────────────────────
+  var $ = function(id){ return document.getElementById(id); };
+  var setupScreen = $('setup-screen');
+  var keyInput    = $('gemini-key');
+  var setupError  = $('setup-error');
+  var chatInput   = $('chat-input');
+  var messages    = $('chat-messages');
+  var chatEmpty   = $('chat-empty');
+  var clearBtn    = $('clear-btn');
+  var sendBtn     = $('send-btn');
+
+  // ── API via XMLHttpRequest (funciona em file://) ────────
+  function callGemini(userMsg, onSuccess, onError) {
+    // Adiciona mensagem do usuário ao histórico
+    history.push({ role: 'user', parts: [{ text: userMsg }] });
+
+    // Monta contexto: injeta system como primeira mensagem 'user' se histórico vazio
+    var contents = [];
+    if (history.length === 1) {
+      // Primeira mensagem: adiciona system instruction como parte do contexto
+      contents.push({ role: 'user', parts: [{ text: SYSTEM + '\n\nUsuário: ' + userMsg }] });
+    } else {
+      // Usa histórico completo mas com system na primeira entrada
+      contents = history.slice();
+      contents[0] = { role: 'user', parts: [{ text: SYSTEM + '\n\nUsuário: ' + history[0].parts[0].text }] };
+    }
+
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + API_KEY;
+    var body = JSON.stringify({
+      contents: contents,
+      generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
+    });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = 30000;
+
+    xhr.onload = function() {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (xhr.status !== 200) {
+          var msg = (data.error && data.error.message) ? data.error.message : 'Erro ' + xhr.status;
+          onError(msg);
+          return;
+        }
+        var reply = data.candidates[0].content.parts[0].text;
+        // Adiciona resposta ao histórico
+        history.push({ role: 'model', parts: [{ text: reply }] });
+        onSuccess(reply);
+      } catch(e) {
+        onError('Resposta inválida da API.');
+      }
+    };
+
+    xhr.onerror = function() {
+      onError('Falha na conexão. Verifique sua internet.');
+    };
+
+    xhr.ontimeout = function() {
+      onError('Tempo esgotado. Tente novamente.');
+    };
+
+    xhr.send(body);
+  }
+
+  // ── setup ──────────────────────────────────────────────
+  function showErr(msg) {
+    setupError.textContent = msg;
+    setupError.style.display = 'block';
+  }
+
+  function hideSetup() {
+    setupScreen.style.display = 'none';
+    chatInput.focus();
+  }
+
+  function showSetup() {
+    keyInput.value = API_KEY || '';
+    keyInput.type  = 'password';
+    setupError.style.display = 'none';
+    setupScreen.style.display = 'flex';
+  }
+
+  $('setup-btn').addEventListener('click', function() {
+    setupError.style.display = 'none';
+    var key = keyInput.value.trim();
+    if (!key)             { showErr('⚠️ Cole sua chave antes de continuar.'); return; }
+    if (!key.startsWith('AIza')) { showErr('⚠️ Chave inválida. Deve começar com "AIza".'); return; }
+    API_KEY = key;
+    try { localStorage.setItem('vox_key', key); } catch(e){}
+    hideSetup();
+  });
+
+  keyInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') $('setup-btn').click();
+  });
+
+  $('toggle-btn').addEventListener('click', function(){
+    keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
+  });
+
+  $('key-btn').addEventListener('click', showSetup);
+
+  // ── chat ───────────────────────────────────────────────
+  function resize() {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  }
+
+  function updateBtn() {
+    var ok = chatInput.value.trim().length > 0 && !chatLoading;
+    sendBtn.classList.toggle('ready', ok);
+  }
+
+  chatInput.addEventListener('input', function(){ resize(); updateBtn(); });
+  chatInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); doSend(); }
+  });
+
+  sendBtn.addEventListener('click', function(){ doSend(); });
+
+  document.querySelectorAll('.sug-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ doSend(btn.innerText); });
+  });
+
+  clearBtn.addEventListener('click', function(){
+    history = [];
+    messages.querySelectorAll('.msg-row').forEach(function(r){ r.remove(); });
+    chatEmpty.style.display = 'flex';
+    clearBtn.style.display  = 'none';
+  });
+
+  function doSend(text) {
+    if (!API_KEY) { showSetup(); return; }
+    var msg = (text || chatInput.value).trim();
+    if (!msg || chatLoading) return;
+
+    chatLoading = true;
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    updateBtn();
+    chatEmpty.style.display = 'none';
+    clearBtn.style.display  = 'block';
+
+    addMsg('user', msg);
+    var tid = addThinking();
+    scrollDown();
+
+    callGemini(msg,
+      function(reply) {
+        rmThinking(tid);
+        addMsg('bot', reply);
+        chatLoading = false;
+        updateBtn();
+        scrollDown();
+      },
+      function(errMsg) {
+        rmThinking(tid);
+        var isKey = /api.?key|invalid|auth|403|400/i.test(errMsg);
+        addMsg('bot', isKey
+          ? '🔑 Chave inválida ou expirada. Toque em "🔑 Chave" para corrigir.'
+          : '⚠️ ' + errMsg);
+        chatLoading = false;
+        updateBtn();
+        scrollDown();
+      }
+    );
+  }
+
+  // ── helpers ────────────────────────────────────────────
+  function addMsg(role, text) {
+    var row = document.createElement('div');
+    row.className = 'msg-row ' + (role === 'user' ? 'user' : 'bot');
+    row.innerHTML = role === 'bot'
+      ? '<div class="avatar bot-av">✦</div><div class="bubble bot-b">' + esc(text) + '</div>'
+      : '<div class="bubble user-b">' + esc(text) + '</div><div class="avatar user-av">👤</div>';
+    messages.appendChild(row);
+  }
+
+  function addThinking() {
+    var id  = 'tk' + Date.now();
+    var row = document.createElement('div');
+    row.className = 'msg-row bot'; row.id = id;
+    row.innerHTML = '<div class="avatar bot-av">✦</div><div class="bubble bot-b"><div class="thinking"><div class="dot" style="animation-delay:0s"></div><div class="dot" style="animation-delay:.2s"></div><div class="dot" style="animation-delay:.4s"></div></div></div>';
+    messages.appendChild(row);
+    return id;
+  }
+
+  function rmThinking(id) { var el = $(id); if(el) el.remove(); }
+
+  function scrollDown() {
+    setTimeout(function(){ messages.scrollTop = messages.scrollHeight; }, 60);
+  }
+
+  function esc(t) {
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  }
+
+  // ── init ───────────────────────────────────────────────
+  try {
+    var saved = localStorage.getItem('vox_key');
+    if (saved && saved.startsWith('AIza')) {
+      API_KEY = saved;
+      hideSetup();
+    }
+  } catch(e) {}
+
+})();
+</script>
+</body>
+</html>
